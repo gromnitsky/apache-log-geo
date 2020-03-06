@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'json'
+require 'mmdb'
+
+opt = {db: '/usr/share/GeoIP/GeoLite2-City.mmdb'}
+op = OptionParser.new do |o|
+  o.banner = "Usage: #{File.basename $0} [-d GeoLite2-City.mmdb] ip..."
+  o.on("-d path", "maxmind db file") { |v| opt[:db] = v }
+end
+op.parse!
+
+if ARGV.size == 0 then warn op.help; exit 2; end
+
+begin
+  geo = MaxMindDB.new opt[:db]
+rescue
+  op.warn "failed to open #{opt[:db]}"; exit 2
+end
+
+exit_code = 0
+puts (ARGV.map do |ip|
+        r = geo.lookup ip rescue nil
+        r ? r[:ip] = ip : exit_code = 1
+        r
+      end).to_json
+
+exit exit_code
