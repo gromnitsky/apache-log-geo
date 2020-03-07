@@ -2,12 +2,49 @@
 
 require 'optparse'
 require 'json'
+require 'shellwords'
 require 'mmdb'
 
-opt = {db: '/usr/share/GeoIP/GeoLite2-City.mmdb'}
+class FMT
+  def initialize ips, geo
+    @ips = ips; @geo = geo
+    @errors = 0
+  end
+  attr_accessor :errors
+
+  def sequential
+    @ips.each_with_index do |ip, ip_idx|
+      r = @geo.lookup ip rescue nil
+      if r
+        r.each_with_index {|(k,v), info_idx| yield ip, ip_idx, k,v, info_idx }
+      else
+        @errors += 1
+        yield ip, ip_idx, nil, nil, 0
+      end
+    end
+  end
+
+  def json
+    @ips.map do |ip|
+       r = @geo.lookup ip rescue nil
+       r ? r[:ip] = ip : @errors += 1
+       r
+     end.to_json
+  end
+end
+
+# save user some typing if we can guess the OS
+# FIXME
+datadir = RUBY_PLATFORM =~ /linux/ ? '/usr/share' : '/usr/local/share'
+opt = {
+  db: "#{datadir}/GeoIP/GeoLite2-City.mmdb",
+  fmt: 'json'
+}
+
 op = OptionParser.new do |o|
-  o.banner = "Usage: #{File.basename $0} [-d GeoLite2-City.mmdb] ip..."
+  o.banner = "Usage: #{File.basename $0} [-d GeoLite2-City.mmdb] [-f fmt] ip..."
   o.on("-d path", "maxmind db file") { |v| opt[:db] = v }
+  o.on("-f fmt", "output format: json, shell, human") { |v| opt[:fmt] = v }
 end
 op.parse!
 
@@ -19,11 +56,29 @@ rescue
   op.warn "failed to open #{opt[:db]}"; exit 2
 end
 
-exit_code = 0
-puts (ARGV.map do |ip|
-        r = geo.lookup ip rescue nil
-        r ? r[:ip] = ip : exit_code = 1
-        r
-      end).to_json
+fmt = FMT.new ARGV, geo
 
-exit exit_code
+case opt[:fmt]
+when 'json'
+  puts fmt.json
+when 'shell'
+  fmt.sequential do |ip, ip_idx, k,v, info_idx|
+    if info_idx == 0
+      puts "" if ip_idx > 0
+      puts "ip=#{ip.shellescape}"
+    end
+    next unless k
+    puts "#{k}=#{(v.is_a?(Array) ? v.join(',') : v.to_s).shellescape}"
+  end
+else                            # human
+  fmt.sequential do |ip, ip_idx, k,v, info_idx|
+    if info_idx == 0
+      puts "" if ip_idx > 0
+      puts "ip: #{ip}"
+    end
+    next unless k
+    puts "#{k}: #{v.is_a?(Array) ? v.join(',') : v}"
+  end
+end
+
+exit fmt.errors > 0 ? 1 : 0
