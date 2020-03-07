@@ -17,8 +17,7 @@ class FMT
 
     info = @geo.lookup ip rescue nil
     if !info
-      @errors += 1
-      r << "error=1"
+      r << "error=#{@errors += 1}"
     else
       r += info.map do |k,v|
         "#{k}=#{(v.is_a?(Array) ? v.join(',') : v.to_s).shellescape}"
@@ -33,12 +32,7 @@ class FMT
       list.split.map do |ip|
         r = {ip: ip}
         info = @geo.lookup ip rescue nil
-        if info
-          r.merge(info)
-        else
-          @errors += 1
-          r.merge({error: true})
-        end
+        info ? r.merge(info) : r.merge({error: @errors += 1})
       end
      end.flatten.to_json
   end
