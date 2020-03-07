@@ -1,54 +1,73 @@
 #!/usr/bin/env ruby
 
 require 'optparse'
-require 'json'
-require 'shellwords'
 require 'mmdb'
 
 class FMT
-  def initialize ips, geo
-    @ips = ips; @geo = geo
+  def initialize input, geo
+    @input = input; @geo = geo
     @errors = 0
   end
   attr_accessor :errors
 
-  def sequential
-    @ips.each_with_index do |ip, ip_idx|
-      r = @geo.lookup ip rescue nil
-      if r
-        r.each_with_index {|(k,v), info_idx| yield ip, ip_idx, k,v, info_idx }
-      else
-        @errors += 1
-        yield ip, ip_idx, nil, nil, 0
+  def shell                     # print only the 1st entry
+    require 'shellwords'
+    ip = @input.to_enum.next.split.first
+    r = ["ip=#{ip.shellescape}"]
+
+    info = @geo.lookup ip rescue nil
+    if !info
+      @errors += 1
+      r << "error=1"
+    else
+      r += info.map do |k,v|
+        "#{k}=#{(v.is_a?(Array) ? v.join(',') : v.to_s).shellescape}"
       end
     end
+    r.join "\n"
   end
 
   def json
-    @ips.map do |ip|
-       r = @geo.lookup ip rescue nil
-       r ? r[:ip] = ip : @errors += 1
-       r
-     end.to_json
+    require 'json'
+    @input.map do |list|
+      list.split.map do |ip|
+        r = {ip: ip}
+        info = @geo.lookup ip rescue nil
+        if info
+          r.merge(info)
+        else
+          @errors += 1
+          r.merge({error: true})
+        end
+      end
+     end.flatten.to_json
   end
 end
 
 # save user some typing if we can guess the OS
-# FIXME
-datadir = RUBY_PLATFORM =~ /linux/ ? '/usr/share' : '/usr/local/share'
+def db_default_location
+  datadir = case RUBY_PLATFORM
+            when /linux/ then '/usr/share'
+            when /cygwin|msys/ then '/usr/share'
+            when /darwin/ then '/usr/local/var' # untested
+            when /freebsd/ then '/usr/local/share'
+            else nil
+            end
+  return 'GeoLite2-City.mmdb' unless datadir
+  File.join datadir, 'GeoIP/GeoLite2-City.mmdb'
+end
+
 opt = {
-  db: "#{datadir}/GeoIP/GeoLite2-City.mmdb",
+  db: db_default_location,
   fmt: 'json'
 }
 
 op = OptionParser.new do |o|
   o.banner = "Usage: #{File.basename $0} [-d GeoLite2-City.mmdb] [-f fmt] ip..."
   o.on("-d path", "maxmind db file") { |v| opt[:db] = v }
-  o.on("-f fmt", "output format: json, shell, human") { |v| opt[:fmt] = v }
+  o.on("-f fmt", "output format: json, shell") { |v| opt[:fmt] = v }
 end
 op.parse!
-
-if ARGV.size == 0 then warn op.help; exit 2; end
 
 begin
   geo = MaxMindDB.new opt[:db]
@@ -56,29 +75,6 @@ rescue
   op.warn "failed to open #{opt[:db]}"; exit 2
 end
 
-fmt = FMT.new ARGV, geo
-
-case opt[:fmt]
-when 'json'
-  puts fmt.json
-when 'shell'
-  fmt.sequential do |ip, ip_idx, k,v, info_idx|
-    if info_idx == 0
-      puts "" if ip_idx > 0
-      puts "ip=#{ip.shellescape}"
-    end
-    next unless k
-    puts "#{k}=#{(v.is_a?(Array) ? v.join(',') : v.to_s).shellescape}"
-  end
-else                            # human
-  fmt.sequential do |ip, ip_idx, k,v, info_idx|
-    if info_idx == 0
-      puts "" if ip_idx > 0
-      puts "ip: #{ip}"
-    end
-    next unless k
-    puts "#{k}: #{v.is_a?(Array) ? v.join(',') : v}"
-  end
-end
-
+fmt = FMT.new (ARGV.size > 0 ? ARGV : $stdin), geo
+puts fmt.send opt[:fmt]
 exit fmt.errors > 0 ? 1 : 0
