@@ -31,17 +31,17 @@ OptionParser.new do |o|
   o.banner = "Usage: #{File.basename $0} [-d GeoLite2-City.mmdb] [-v] [--key val ...]"
   o.on("-d path", "maxmind db file") { |v| opt[:db] = v }
   o.on("-v", "invert match") { |v| opt[:v] = v }
-  o.on("--city str") { |v| opt[:query][:city] = v }
-  o.on("--country str") { |v| opt[:query][:country] = v }
+  o.on("--city regexp") { |v| opt[:query][:city] = v }
+  o.on("--country regexp") { |v| opt[:query][:country] = v }
   o.on("--cc str", "2 letter country code") { |v|
     v.split('|').each do |cc|
       errx 2, "invalid country code: #{cc}" unless COUNTRY_CODES.key? cc.upcase
     end
     opt[:query][:country_code] = v
   }
-  o.on("--continent str") { |v| opt[:query][:continent] = v }
-  o.on("--postcode str") { |v| opt[:query][:postcode] = v }
-  o.on("--sub str", "subdivisions") { |v| opt[:query][:subdivisions] = v }
+  o.on("--continent regexp") { |v| opt[:query][:continent] = v }
+  o.on("--postcode regexp") { |v| opt[:query][:postcode] = v }
+  o.on("--sub regexp", "subdivisions") { |v| opt[:query][:subdivisions] = v }
 end.parse!
 
 begin
