@@ -2,8 +2,11 @@ Gem::Specification.new do |s|
   s.version = '0.0.1'
 
   s.name = 'apache-log-geo'
-  s.summary = "An offline GeoIP CLI filter for Apache (common, combined) logs; it's like grep but with a knowledge about what data an ip holds; supa handy!"
-  s.description = "Requires MaxMind's GeoLite2 DB (GeoLite2-City.mmdb) installed."
+  s.summary = "An offline GeoIP CLI filter for Apache (common, combined) logs."
+  s.description = <<END
+It's like grep but with a knowledge about what data an ip
+holds. Requires MaxMind's GeoLite2 DB (GeoLite2-City.mmdb) installed.
+END
   s.author = 'Alexander Gromnitsky'
   s.email = 'alexander.gromnitsky@gmail.com'
   s.homepage = 'https://github.com/gromnitsky/apache-log-geo'
@@ -12,7 +15,6 @@ Gem::Specification.new do |s|
     'apache-log-geo',
     'mmdb-lookup',
     'lib.rb',
-    'package.gemspec',
     'README.md',
   ]
 
