@@ -2,6 +2,8 @@
 
 require 'optparse'
 require 'mmdb'
+require_relative 'lib'
+include ApacheLogGeo
 
 class FMT
   def initialize input, geo
@@ -38,35 +40,22 @@ class FMT
   end
 end
 
-# save user some typing if we can guess the OS
-def db_default_location
-  datadir = case RUBY_PLATFORM
-            when /linux/ then '/usr/share'
-            when /cygwin|msys/ then '/usr/share'
-            when /darwin/ then '/usr/local/var' # untested
-            when /freebsd/ then '/usr/local/share'
-            else nil
-            end
-  return 'GeoLite2-City.mmdb' unless datadir
-  File.join datadir, 'GeoIP/GeoLite2-City.mmdb'
-end
 
 opt = {
-  db: db_default_location,
+  db: geo_db_location,
   fmt: 'json'
 }
 
-op = OptionParser.new do |o|
+OptionParser.new do |o|
   o.banner = "Usage: #{File.basename $0} [-d GeoLite2-City.mmdb] [-f fmt] ip..."
   o.on("-d path", "maxmind db file") { |v| opt[:db] = v }
   o.on("-f fmt", "output format: json, shell") { |v| opt[:fmt] = v }
-end
-op.parse!
+end.parse!
 
 begin
   geo = MaxMindDB.new opt[:db]
 rescue
-  op.warn "failed to open #{opt[:db]}"; exit 2
+  errx 2, "failed to open #{opt[:db]}"
 end
 
 fmt = FMT.new (ARGV.size > 0 ? ARGV : $stdin), geo

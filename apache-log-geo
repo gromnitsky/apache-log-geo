@@ -1,0 +1,74 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'mmdb'
+require_relative 'lib'
+include ApacheLogGeo
+
+# exact match: country_code, postcode
+# regexp: continent, country, subdivisions, city
+#
+# conditions are anded. no conditions == true
+def match_by_geo info, query
+  query.each do |k,v|
+    if k == :country_code || k == :postcode
+      return false unless info[k].to_s.casecmp? v
+    end
+
+    if k == :subdivisions # it's an array, one match of its elements is enough
+      return false unless info[k].any? {|val| val.to_s =~ /#{v}/i }
+    end
+
+    return false unless info[k].to_s =~ /#{v}/i
+  end
+
+  true
+end
+
+opt = {
+  db: geo_db_location,
+  v: false,
+  query: {}
+}
+
+OptionParser.new do |o|
+  o.banner = "Usage: #{File.basename $0} [-d GeoLite2-City.mmdb] [-v] [--key val ...]"
+  o.on("-d path", "maxmind db file") { |v| opt[:db] = v }
+  o.on("-v", "invert match") { |v| opt[:v] = v }
+  o.on("--city str") { |v| opt[:query][:city] = v }
+  o.on("--country str") { |v| opt[:query][:country] = v }
+  o.on("--cc str", "2 letter country code") { |v|
+    errx 2, "invalid country code" unless COUNTRY_CODES.key? v.upcase
+    opt[:query][:country_code] = v
+  }
+  o.on("--continent str") { |v| opt[:query][:continent] = v }
+  o.on("--postcode str") { |v| opt[:query][:postcode] = v }
+  o.on("--sub str", "subdivisions") { |v| opt[:query][:subdivisions] = v }
+end.parse!
+
+begin
+  geo = MaxMindDB.new opt[:db]
+rescue
+  errx 2, "failed to open #{opt[:db]}"
+end
+
+found_anything = false
+$stdin.each_line do |line|
+  next if line =~ /^\s*$/
+  ip = line.split[0]
+  begin
+    info = geo.lookup ip
+  rescue
+    warnx "no data for `${ip[0..15]}`, filtering the entry out"
+    next
+  end
+
+  match = match_by_geo info, opt[:query]
+  match = !match if opt[:v]
+  if match
+    found_anything = true
+    puts line
+  end
+end
+
+exit found_anything ? 0 : 1
