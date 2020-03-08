@@ -11,12 +11,8 @@ include ApacheLogGeo
 # conditions are anded. no conditions == true
 def match_by_geo info, query
   query.each do |k,v|
-    if k == :country_code || k == :postcode
-      return false unless info[k].to_s.casecmp? v
-    end
-
     if k == :subdivisions # it's an array, one match of its elements is enough
-      return false unless info[k].any? {|val| val.to_s =~ /#{v}/i }
+      return false unless (info[k] || []).any? {|val| val.to_s =~ /#{v}/i }
     end
 
     return false unless info[k].to_s =~ /#{v}/i
@@ -38,7 +34,9 @@ OptionParser.new do |o|
   o.on("--city str") { |v| opt[:query][:city] = v }
   o.on("--country str") { |v| opt[:query][:country] = v }
   o.on("--cc str", "2 letter country code") { |v|
-    errx 2, "invalid country code" unless COUNTRY_CODES.key? v.upcase
+    v.split('|').each do |cc|
+      errx 2, "invalid country code: #{cc}" unless COUNTRY_CODES.key? cc.upcase
+    end
     opt[:query][:country_code] = v
   }
   o.on("--continent str") { |v| opt[:query][:continent] = v }
@@ -59,7 +57,7 @@ $stdin.each_line do |line|
   begin
     info = geo.lookup ip
   rescue
-    warnx "no data for `${ip[0..15]}`, filtering the entry out"
+    warnx "no data, filtering the entry out: `${ip[0..15]}`"
     next
   end
 
