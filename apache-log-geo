@@ -5,9 +5,6 @@ require 'mmdb'
 require_relative 'lib'
 include ApacheLogGeo
 
-# exact match: country_code, postcode
-# regexp: continent, country, subdivisions, city
-#
 # conditions are anded. no conditions == true
 def match_by_geo info, query
   query.each do |k,v|
@@ -57,7 +54,7 @@ $stdin.each_line do |line|
   begin
     info = geo.lookup ip
   rescue
-    warnx "no data, filtering the entry out: `${ip[0..15]}`"
+    warnx "line #{$stdin.lineno}: no data, filtering out: #{ip[0..15]}"
     next
   end
 
