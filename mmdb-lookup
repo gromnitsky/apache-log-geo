@@ -29,13 +29,19 @@ class FMT
 
   def json
     require 'json'
-    @input.map do |list|
-      list.split.map do |ip|
-        r = {ip: ip}
-        info = @geo.get ip
-        info ? r.merge(info) : r.merge({error: @errors += 1})
-      end
-     end.flatten.to_json
+    trans = -> (ip) do
+      r = {ip: ip}
+      info = @geo.get ip
+      info ? r.merge(info) : r.merge({error: @errors += 1})
+    end
+
+    if @input.is_a?(IO)      # stdin, in which we expect an apache log
+      @input.map { |line| trans.call line.split[0] }.to_json
+    else                     # argv
+      @input.map do |list|
+        list.split.map { |ip| trans.call ip }
+      end.flatten.to_json
+    end
   end
 end
 

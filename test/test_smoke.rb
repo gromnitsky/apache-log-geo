@@ -35,10 +35,9 @@ end
 
 class SmokeLookup < Minitest::Test
   def test_json
-    r = JSON.parse(`echo 2.3.4.5 q 6.7.8.9 | ./mmdb-lookup`)
+    r = JSON.parse(`printf "2.3.4.5 q\n6.7.8.9" | ./mmdb-lookup`)
     assert_equal 'France', r[0]['country']
-    assert_equal 1, r[1]['error']
-    assert_equal 'US', r[2]['country_code']
+    assert_equal 'US', r[1]['country_code']
   end
 
   def test_shell
