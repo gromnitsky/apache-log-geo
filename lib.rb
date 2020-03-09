@@ -273,3 +273,29 @@ module ApacheLogGeo
     "ZW" => "Zimbabwe"
   }
 end
+
+require 'maxmind/db'
+
+class ApacheLogGeo::GeoDB
+  def initialize path
+    # MODE_FILE is slow!
+    @db = MaxMind::DB.new path, mode: MaxMind::DB::MODE_MEMORY
+  end
+
+  def get ip
+    r = @db.get ip rescue nil
+    return nil unless r
+
+    {
+      city:         r.dig('city', 'names', 'en'),
+      continent:    r.dig('continent', 'names', 'en'),
+      country:      r.dig('country', 'names', 'en'),
+      country_code: r.dig('country', 'iso_code'),
+      eu:           r.dig('country', 'is_in_european_union'),
+      latitude:     r.dig('location', 'latitude'),
+      longitude:    r.dig('location', 'longitude'),
+      postcode:     r.dig('postal', 'code'),
+      subdivisions: r["subdivisions"]&.map {|v| v&.dig('names', 'en') }&.compact
+    }
+  end
+end

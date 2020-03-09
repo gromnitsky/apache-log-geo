@@ -1,13 +1,16 @@
 #!/usr/bin/env ruby
 
 require 'optparse'
-require 'mmdb'
 require_relative 'lib'
 include ApacheLogGeo
 
 # conditions are anded. no conditions == true
 def match_by_geo info, query
   query.each do |k,v|
+    if k == :eu                 # --eu is a boolean
+      return false unless info[k]
+    end
+
     if k == :subdivisions # it's an array, one match of its elements is enough
       return false unless (info[k] || []).any? {|val| val.to_s =~ /#{v}/i }
     end
@@ -36,13 +39,14 @@ OptionParser.new do |o|
     end
     opt[:query][:country_code] = v
   }
+  o.on("--eu", "is a EU member?") { opt[:query][:eu] = true }
   o.on("--continent regexp") { |v| opt[:query][:continent] = v }
   o.on("--postcode regexp") { |v| opt[:query][:postcode] = v }
   o.on("--sub regexp", "subdivisions") { |v| opt[:query][:subdivisions] = v }
 end.parse!
 
 begin
-  geo = MaxMindDB.new opt[:db]
+  geo = GeoDB.new opt[:db]
 rescue
   errx 2, "failed to open #{opt[:db]}"
 end
@@ -51,9 +55,8 @@ found_anything = false
 $stdin.each_line do |line|
   next if line =~ /^\s*$/
   ip = line.split[0]
-  begin
-    info = geo.lookup ip
-  rescue
+  info = geo.get ip
+  unless info
     warnx "line #{$stdin.lineno}: no data, filtering out: #{ip[0..15]}"
     next
   end

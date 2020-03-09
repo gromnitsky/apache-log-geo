@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 
 require 'optparse'
-require 'mmdb'
 require_relative 'lib'
 include ApacheLogGeo
 
@@ -17,7 +16,7 @@ class FMT
     ip = @input.to_enum.next.split.first
     r = ["ip=#{ip.shellescape}"]
 
-    info = @geo.lookup ip rescue nil
+    info = @geo.get ip
     if !info
       r << "error=#{@errors += 1}"
     else
@@ -33,7 +32,7 @@ class FMT
     @input.map do |list|
       list.split.map do |ip|
         r = {ip: ip}
-        info = @geo.lookup ip rescue nil
+        info = @geo.get ip
         info ? r.merge(info) : r.merge({error: @errors += 1})
       end
      end.flatten.to_json
@@ -53,7 +52,7 @@ OptionParser.new do |o|
 end.parse!
 
 begin
-  geo = MaxMindDB.new opt[:db]
+  geo = GeoDB.new opt[:db]
 rescue
   errx 2, "failed to open #{opt[:db]}"
 end
