@@ -1,5 +1,5 @@
 Gem::Specification.new do |s|
-  s.version = '0.0.1'
+  s.version = '0.0.2'
 
   s.name = 'apache-log-geo'
   s.summary = "An offline GeoIP CLI filter for Apache (common, combined) logs."
@@ -22,7 +22,7 @@ END
   s.bindir = '.'
   s.executables = ['apache-log-geo', 'mmdb-lookup']
 
-  s.add_runtime_dependency 'geoip2', '~> 0.3.3'
+  s.add_runtime_dependency 'geoip2_c', '~> 0.3.3'
 
   s.required_ruby_version = '>= 2.3.0'
 end

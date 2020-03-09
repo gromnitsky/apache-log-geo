@@ -21,7 +21,7 @@ It uses a C extension [geoip2_c][], instead of the official maxmind-db
 gem, for in my local tests, the latter (in conjunction with the Ruby
 IO) is 9 (nine) times slower!
 
-[geoip2_c]: [https://github.com/fluent-plugins-nursery/geoip2_c]
+[geoip2_c]: https://github.com/fluent-plugins-nursery/geoip2_c
 
 ## Usage
 
