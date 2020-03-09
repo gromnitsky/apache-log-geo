@@ -17,6 +17,12 @@ key & install geoipupdate to fetch the db file.
 
     gem install apache-log-geo
 
+It uses a C extension [geoip2_c][], instead of the official maxmind-db
+gem, for in my local tests, the latter (in conjunction with the Ruby
+IO) is 9 (nine) times slower!
+
+[geoip2_c]: [https://github.com/fluent-plugins-nursery/geoip2_c]
+
 ## Usage
 
 The pkg contains 2 CLI utils only. There's no reusable library code.
@@ -33,6 +39,7 @@ Usage: apache-log-geo [-d GeoLite2-City.mmdb] [-v] [--key val ...]
         --city regexp
         --country regexp
         --cc str                     2 letter country code
+        --eu                         is an EU member?
         --continent regexp
         --postcode regexp
         --sub regexp                 subdivisions
@@ -96,7 +103,7 @@ Kyiv City
 Replicate `apache-log-geo` util--print only the requests from the Irish
 (the example requires `npm -g json`):
 
-    $ awk '{print $1}' test/access.log | ./mmdb-lookup | json -c 'this.country_code == "IE"' -a ip | grep -h -f - test/access.log
+    $ cat test/access.log | ./mmdb-lookup | json -c 'this.country_code == "IE"' -a ip | grep -h -f - test/access.log
 
 ## Exit status
 
