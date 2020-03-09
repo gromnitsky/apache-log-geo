@@ -54,7 +54,7 @@ end.parse!
 begin
   geo = GeoDB.new opt[:db]
 rescue
-  errx 2, "failed to open #{opt[:db]}"
+  errx 2, $!
 end
 
 fmt = FMT.new (ARGV.size > 0 ? ARGV : $stdin), geo

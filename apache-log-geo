@@ -39,7 +39,7 @@ OptionParser.new do |o|
     end
     opt[:query][:country_code] = v
   }
-  o.on("--eu", "is a EU member?") { opt[:query][:eu] = true }
+  o.on("--eu", "is an EU member?") { opt[:query][:eu] = true }
   o.on("--continent regexp") { |v| opt[:query][:continent] = v }
   o.on("--postcode regexp") { |v| opt[:query][:postcode] = v }
   o.on("--sub regexp", "subdivisions") { |v| opt[:query][:subdivisions] = v }
@@ -48,7 +48,7 @@ end.parse!
 begin
   geo = GeoDB.new opt[:db]
 rescue
-  errx 2, "failed to open #{opt[:db]}"
+  errx 2, $!
 end
 
 found_anything = false

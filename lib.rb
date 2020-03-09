@@ -274,16 +274,15 @@ module ApacheLogGeo
   }
 end
 
-require 'maxmind/db'
+require 'geoip2'
 
 class ApacheLogGeo::GeoDB
   def initialize path
-    # MODE_FILE is slow!
-    @db = MaxMind::DB.new path, mode: MaxMind::DB::MODE_MEMORY
+    @db = GeoIP2::Database.new path
   end
 
   def get ip
-    r = @db.get ip rescue nil
+    r = @db.lookup ip rescue nil
     return nil unless r
 
     {
@@ -295,7 +294,7 @@ class ApacheLogGeo::GeoDB
       latitude:     r.dig('location', 'latitude'),
       longitude:    r.dig('location', 'longitude'),
       postcode:     r.dig('postal', 'code'),
-      subdivisions: r["subdivisions"]&.map {|v| v&.dig('names', 'en') }&.compact
+      subdivisions: r.dig('subdivisions')&.map {|v| v&.dig('names', 'en') }&.compact
     }
   end
 end
