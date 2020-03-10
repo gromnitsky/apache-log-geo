@@ -274,15 +274,11 @@ module ApacheLogGeo
   }
 end
 
-require 'geoip2'
-
-class ApacheLogGeo::GeoDB
-  def initialize path
-    @db = GeoIP2::Database.new path
-  end
+class ApacheLogGeo::DB
+  def lookup _ip; raise 'not implemented'; end
 
   def get ip
-    r = @db.lookup ip rescue nil
+    r = lookup ip
     return nil unless r
 
     {
@@ -297,4 +293,35 @@ class ApacheLogGeo::GeoDB
       subdivisions: r.dig('subdivisions')&.map {|v| v&.dig('names', 'en') }&.compact
     }
   end
+end
+
+module ApacheLogGeo
+  def db_adapter_load
+    adapters = {
+      "geoip2" => Geoip2_c,
+      "maxmind/db" => Maxmind,
+    }
+    adapter = adapters.keys.detect do |k|
+      begin
+        require k
+      rescue LoadError
+        next nil
+      end
+      k
+    end
+
+    adapters[adapter]
+  end
+end
+
+# Available adapters
+
+class ApacheLogGeo::Geoip2_c < ApacheLogGeo::DB # a C extension
+  def initialize path; @db = GeoIP2::Database.new path; end
+  def lookup ip; @db.lookup ip rescue nil; end
+end
+
+class ApacheLogGeo::Maxmind < ApacheLogGeo::DB # a pure ruby implementation
+  def initialize path; @db = MaxMind::DB.new path, mode: MaxMind::DB::MODE_MEMORY; end
+  def lookup ip; @db.get ip rescue nil; end
 end

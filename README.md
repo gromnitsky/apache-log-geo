@@ -17,11 +17,12 @@ key & install geoipupdate to fetch the db file.
 
     gem install apache-log-geo
 
-It uses a C extension [geoip2_c][], instead of the official maxmind-db
-gem, for in my local tests, the latter (in conjunction with the Ruby
-IO) is 9 (nine) times slower!
+By default it uses the official maxmind-db gem, but if you also do
 
-[geoip2_c]: https://github.com/fluent-plugins-nursery/geoip2_c
+    gem install geoip2_c
+
+the pkg will automatically load it in maxmind-db stead. geoip2_c is a
+C extension that works *much* faster.
 
 ## Usage
 

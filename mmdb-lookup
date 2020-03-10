@@ -57,8 +57,11 @@ OptionParser.new do |o|
   o.on("-f fmt", "output format: json, shell") { |v| opt[:fmt] = v }
 end.parse!
 
+errx 2, "no db adaptors found" unless (db_adapter = db_adapter_load)
+
 begin
-  geo = GeoDB.new opt[:db]
+  warnx "db_adapter: #{db_adapter}" if $DEBUG
+  geo = db_adapter.new opt[:db]
 rescue
   errx 2, $!
 end

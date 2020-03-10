@@ -1,5 +1,5 @@
 Gem::Specification.new do |s|
-  s.version = '0.0.2'
+  s.version = '0.0.3'
 
   s.name = 'apache-log-geo'
   s.summary = "An offline GeoIP CLI filter for Apache (common, combined) logs."
@@ -22,7 +22,12 @@ END
   s.bindir = '.'
   s.executables = ['apache-log-geo', 'mmdb-lookup']
 
-  s.add_runtime_dependency 'geoip2_c', '~> 0.3.3'
+  s.add_runtime_dependency 'maxmind-db', '~> 1.1.0'
 
-  s.required_ruby_version = '>= 2.3.0'
+  s.required_ruby_version = '>= 2.4.0'
+  s.post_install_message = <<~END
+    ****************************************************************
+    Make sure to install geoip2_c 0.3.3 gem for maximum performance!
+    ****************************************************************
+  END
 end
