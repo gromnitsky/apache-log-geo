@@ -26,8 +26,8 @@ END
 
   s.required_ruby_version = '>= 2.4.0'
   s.post_install_message = <<~END
-    ****************************************************************
-    Make sure to install geoip2_c 0.3.3 gem for maximum performance!
-    ****************************************************************
+    *******************************************************************
+    Make sure to install geoip2_c ~> 0.3.3 gem for maximum performance!
+    *******************************************************************
   END
 end

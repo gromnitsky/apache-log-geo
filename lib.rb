@@ -298,11 +298,15 @@ end
 module ApacheLogGeo
   def db_adapter_load
     adapters = {
-      "geoip2" => Geoip2_c,
-      "maxmind/db" => Maxmind,
+      "geoip2" => {
+        klass: Geoip2_c,
+        gem: ['geoip2_c', '~> 0.3.3'] # can't specify it in .gemspec!
+      },
+      "maxmind/db" => { klass: Maxmind},
     }
     adapter = adapters.keys.detect do |k|
       begin
+        gem(*adapters[k][:gem]) if adapters[k][:gem]
         require k
       rescue LoadError
         next nil
@@ -310,7 +314,7 @@ module ApacheLogGeo
       k
     end
 
-    adapters[adapter]
+    adapters[adapter][:klass]
   end
 end
 
