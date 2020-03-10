@@ -13,8 +13,6 @@ END
   s.homepage = 'https://github.com/gromnitsky/apache-log-geo'
   s.license = 'MIT'
   s.files = [
-    'apache-log-geo',
-    'mmdb-lookup',
     'lib.rb',
     'README.md',
   ]
