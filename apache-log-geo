@@ -54,6 +54,9 @@ rescue
   errx 2, $!
 end
 
+Signal.trap 'SIGINT', sigint_handler
+Signal.trap 'SIGPIPE', sigint_handler
+
 found_anything = false
 $stdin.each_line do |line|
   next if line =~ /^\s*$/

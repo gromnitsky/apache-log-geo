@@ -19,6 +19,7 @@ module ApacheLogGeo
   end
 
   def warnx msg; $stderr.puts "#{File.basename $0} warning: #{msg}"; end
+  def sigint_handler; proc {|s| puts ""; exit 128+s }; end
 
   # https://datahub.io/core/country-list
   COUNTRY_CODES = {
