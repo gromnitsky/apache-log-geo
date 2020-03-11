@@ -35,9 +35,15 @@ end
 
 class SmokeLookup < Minitest::Test
   def test_json
-    r = JSON.parse(`printf "2.3.4.5 q\n6.7.8.9" | ./mmdb-lookup`)
+    r = `printf "\n\n2.3.4.5 q\nq\n6.7.8.9" | ./mmdb-lookup`.split("\n").map{|v| JSON.parse v}
     assert_equal 'France', r[0]['country']
-    assert_equal 'US', r[1]['country_code']
+    assert_equal 1, r[1]['error']
+    assert_equal 'US', r[2]['country_code']
+
+    r = `./mmdb-lookup 2.3.4.5 q 6.7.8.9`.split("\n").map{|v| JSON.parse v}
+    assert_equal 'France', r[0]['country']
+    assert_equal 1, r[1]['error']
+    assert_equal 'US', r[2]['country_code']
   end
 
   def test_shell

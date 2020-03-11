@@ -104,7 +104,7 @@ Kyiv City
 Replicate `apache-log-geo` util--print only the requests from the Irish
 (the example requires `npm -g json`):
 
-    $ cat test/access.log | ./mmdb-lookup | json -c 'this.country_code == "IE"' -a ip | grep -h -f - test/access.log
+    $ cat test/access.log | ./mmdb-lookup | json -g -c 'this.country_code == "IE"' -a ip | grep -h -f - test/access.log
 
 ## Exit status
 

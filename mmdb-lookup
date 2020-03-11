@@ -5,8 +5,8 @@ require_relative 'lib'
 include ApacheLogGeo
 
 class FMT
-  def initialize input, geo
-    @input = input; @geo = geo
+  def initialize input, geo, callback
+    @input = input; @geo = geo; @cb = method(callback)
     @errors = 0
   end
   attr_accessor :errors
@@ -24,7 +24,7 @@ class FMT
         "#{k}=#{(v.is_a?(Array) ? v.join(',') : v.to_s).shellescape}"
       end
     end
-    r.join "\n"
+    @cb.call r.join "\n"
   end
 
   def json
@@ -36,11 +36,12 @@ class FMT
     end
 
     if @input.is_a?(IO)      # stdin, in which we expect an apache log
-      @input.map { |line| trans.call line.split[0] }.to_json
+      @input.each_line do |line|
+        next if line =~ /^\s*$/
+        @cb.call trans.call(line.split[0]).to_json
+      end
     else                     # argv
-      @input.map do |list|
-        list.split.map { |ip| trans.call ip }
-      end.flatten.to_json
+      @input.map {|ip| @cb.call trans.call(ip).to_json }
     end
   end
 end
@@ -66,6 +67,9 @@ rescue
   errx 2, $!
 end
 
-fmt = FMT.new (ARGV.size > 0 ? ARGV : $stdin), geo
-puts fmt.send opt[:fmt]
+Signal.trap 'SIGINT', sigint_handler
+Signal.trap 'SIGPIPE', sigint_handler
+
+fmt = FMT.new (ARGV.size > 0 ? ARGV : $stdin), geo, :puts
+fmt.send opt[:fmt]
 exit fmt.errors > 0 ? 1 : 0
