@@ -79,8 +79,8 @@ $ cat test/access.log | ./apache-log-geo --cc 'ie|de' | wc -l
 
 ### mmdb-lookup
 
-Renders the data about ip addresses in json (default) or a suitable
-for a shell script formats:
+Renders data about ip addresses in newline-delimited json (default) or
+in a shell script ready format:
 
 ~~~
 $ ./mmdb-lookup -h
