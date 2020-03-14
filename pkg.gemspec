@@ -1,5 +1,5 @@
 Gem::Specification.new do |s|
-  s.version = '0.0.3'
+  s.version = '0.0.4'
 
   s.name = 'apache-log-geo'
   s.summary = "An offline GeoIP CLI filter for Apache (common, combined) logs."
